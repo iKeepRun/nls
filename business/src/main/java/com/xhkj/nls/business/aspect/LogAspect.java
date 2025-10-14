@@ -64,6 +64,8 @@ public class LogAspect {
             }
             arguments[i] = args[i];
         }
+
+
         // 排除字段，敏感字段或太长的字段不显示：身份证、手机号、邮箱、密码等
         String[] excludeProperties = {"cvv2", "idCard"};
         PropertyPreFilters filters = new PropertyPreFilters();
