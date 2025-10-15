@@ -1,5 +1,6 @@
 package com.xhkj.nls.business.aspect;
 
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.support.spring.PropertyPreFilters;
 import jakarta.servlet.ServletRequest;
@@ -10,6 +11,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.*;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -33,47 +35,55 @@ public class LogAspect {
     }
 
     @Around("pointcut()")
-    public Object doAround(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-        log.info("------------- 环绕通知开始 -------------");
-        long startTime = System.currentTimeMillis();
-        // 开始打印请求日志
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request = attributes.getRequest();
-        Signature signature = proceedingJoinPoint.getSignature();
-        String name = signature.getName();
+    public Object doAround(ProceedingJoinPoint proceedingJoinPoint) {
+        try {
+            MDC.put("LOG_ID", IdUtil.getSnowflakeNextIdStr());
 
-        // 打印请求信息
-        log.info("请求地址: {} {}", request.getRequestURL().toString(), request.getMethod());
-        log.info("类名方法: {}.{}", signature.getDeclaringTypeName(), name);
-        log.info("远程地址: {}", request.getRemoteAddr());
+            log.info("------------- 环绕通知开始 -------------");
+            long startTime = System.currentTimeMillis();
+            // 开始打印请求日志
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            Signature signature = proceedingJoinPoint.getSignature();
+            String name = signature.getName();
 
-        // 打印请求参数
-        Object[] args = proceedingJoinPoint.getArgs();
-        // LOG.info("请求参数: {}", JSONObject.toJSONString(args));
+            // 打印请求信息
+            log.info("请求地址: {} {}", request.getRequestURL().toString(), request.getMethod());
+            log.info("类名方法: {}.{}", signature.getDeclaringTypeName(), name);
+            log.info("远程地址: {}", request.getRemoteAddr());
 
-        // 排除特殊类型的参数，如文件类型
-        Object[] arguments = new Object[args.length];
-        for (int i = 0; i < args.length; i++) {
-            if (args[i] instanceof ServletRequest
-                    || args[i] instanceof ServletResponse
-                    || args[i] instanceof MultipartFile) {
-                continue;
+            // 打印请求参数
+            Object[] args = proceedingJoinPoint.getArgs();
+            // LOG.info("请求参数: {}", JSONObject.toJSONString(args));
+
+            // 排除特殊类型的参数，如文件类型
+            Object[] arguments = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                if (args[i] instanceof ServletRequest
+                        || args[i] instanceof ServletResponse
+                        || args[i] instanceof MultipartFile) {
+                    continue;
+                }
+                arguments[i] = args[i];
             }
-            arguments[i] = args[i];
+
+            // 排除字段，敏感字段或太长的字段不显示：身份证、手机号、邮箱、密码等
+            String[] excludeProperties = {"cvv2", "idCard"};
+            PropertyPreFilters filters = new PropertyPreFilters();
+            PropertyPreFilters.MySimplePropertyPreFilter excludefilter = filters.addFilter();
+            excludefilter.addExcludes(excludeProperties);
+            log.info("请求参数: {}", JSONObject.toJSONString(arguments, excludefilter));
+            Object result = proceedingJoinPoint.proceed();
+            // 排除字段，敏感字段或太长的字段不显示：身份证、手机号、邮箱、密码等
+            log.info("返回结果: {}", JSONObject.toJSONString(result, excludefilter));
+            log.info("------------- 环绕通知结束 耗时：{} ms -------------", System.currentTimeMillis() - startTime);
+
+            return result;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        } finally {
+            MDC.remove("LOG_ID");
         }
-
-
-        // 排除字段，敏感字段或太长的字段不显示：身份证、手机号、邮箱、密码等
-        String[] excludeProperties = {"cvv2", "idCard"};
-        PropertyPreFilters filters = new PropertyPreFilters();
-        PropertyPreFilters.MySimplePropertyPreFilter excludefilter = filters.addFilter();
-        excludefilter.addExcludes(excludeProperties);
-        log.info("请求参数: {}", JSONObject.toJSONString(arguments, excludefilter));
-        Object result = proceedingJoinPoint.proceed();
-        // 排除字段，敏感字段或太长的字段不显示：身份证、手机号、邮箱、密码等
-        log.info("返回结果: {}", JSONObject.toJSONString(result, excludefilter));
-        log.info("------------- 环绕通知结束 耗时：{} ms -------------", System.currentTimeMillis() - startTime);
-        return result;
     }
 
     @After("pointcut()")
