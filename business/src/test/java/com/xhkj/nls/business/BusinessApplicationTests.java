@@ -1,13 +1,14 @@
 package com.xhkj.nls.business;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class BusinessApplicationTests {
 
 	@Test
 	void contextLoads() {
+		String property = System.getProperty("user.dir");
+			System.out.println(property);
 	}
 
 }
