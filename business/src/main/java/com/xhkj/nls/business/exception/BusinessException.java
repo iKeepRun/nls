@@ -5,11 +5,11 @@ import lombok.Data;
 @Data
 public class BusinessException extends RuntimeException{
 
-    private BusinessExceptionEnum e;
+    private BusinessExceptionEnum businessExceptionEnum;
 
-    public BusinessException(BusinessExceptionEnum e) {
-        super(e.getDesc());
-        this.e = e;
+    public BusinessException(BusinessExceptionEnum businessExceptionEnum) {
+        super(businessExceptionEnum.getDesc());
+        this.businessExceptionEnum = businessExceptionEnum;
     }
 
     /**

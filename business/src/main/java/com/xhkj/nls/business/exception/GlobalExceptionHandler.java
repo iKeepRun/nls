@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public CommonResp<Object> exceptionHandler(BusinessException e) {
         log.error("系统异常：", e);
-        return CommonResp.builder().success(false).message(e.getE().getDesc()).build();
+        return CommonResp.builder().success(false).message(e.getBusinessExceptionEnum().getDesc()).build();
     }
 
     /**
