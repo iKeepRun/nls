@@ -24,7 +24,7 @@ import Header from "../components/Header.vue";
 import Sider from "../components/Sider.vue";
 import  axios from "axios";
 
-axios.get('http://localhost:18086/nls/test').then(res => {
+axios.get('/nls/test').then(res => {
   console.log(res.data)
 })
 </script>

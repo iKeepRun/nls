@@ -38,3 +38,7 @@ axios.interceptors.response.use(response => {
 });
 
 
+// console.log("默认服务地址：", import.meta.env.VITE_SERVER);
+
+axios.defaults.baseURL = import.meta.env.VITE_SERVER;
+
