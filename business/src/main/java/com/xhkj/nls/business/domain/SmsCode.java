@@ -1,12 +1,10 @@
 package com.xhkj.nls.business.domain;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 短信验证码表
@@ -18,7 +16,7 @@ public class SmsCode implements Serializable {
     /**
      * id
      */
-    @TableId(value = "id")
+    @TableId(value = "id", type= IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -36,7 +34,7 @@ public class SmsCode implements Serializable {
     /**
      * 用途|枚举[SmsCodeUseEnum]：REGISTER("0", "注册"), FORGET_PASSWORD("1", "忘记密码")
      */
-    @TableField(value = "use")
+    @TableField(value = "`use`")
     private String use;
 
     /**
@@ -48,14 +46,18 @@ public class SmsCode implements Serializable {
     /**
      * 创建时间
      */
-    @TableField(value = "created_at")
-    private Date created_at;
+//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "GMT+8")
+//    @DateTimeFormat(fallbackPatterns = "yyyy/MM/dd HH:mm:ss")
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
 
     /**
      * 修改时间
      */
-    @TableField(value = "updated_at")
-    private Date updated_at;
+//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+//    @DateTimeFormat(fallbackPatterns = "yyyy/MM/dd HH:mm:ss")
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
