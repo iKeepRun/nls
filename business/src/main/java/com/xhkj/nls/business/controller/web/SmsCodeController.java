@@ -18,6 +18,6 @@ public class SmsCodeController {
      @RequestMapping(value = "/send-code",method = RequestMethod.POST)
      public CommonResp sendCode(String phone){
          smsCodeService.sendCode(phone,  SmsCodeUseEnum.REGISTER.getCode());
-         return CommonResp.builder().build();
+         return CommonResp.builder().success(true).build();
      }
 }
