@@ -20,12 +20,12 @@ public class GlobalExceptionHandler {
      * @param e
      * @return
      */
-    @ExceptionHandler(value = Exception.class)
-    @ResponseBody
-    public CommonResp<Object> exceptionHandler(Exception e) {
-        log.error("系统异常：", e);
-        return CommonResp.builder().success(false).message("系统出现异常，请联系管理员").build();
-    }
+//    @ExceptionHandler(value = Exception.class)
+//    @ResponseBody
+//    public CommonResp<Object> exceptionHandler(Exception e) {
+//        log.error("系统异常：", e);
+//        return CommonResp.builder().success(false).message("系统出现异常，请联系管理员").build();
+//    }
 
 
     /**

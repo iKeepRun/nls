@@ -8,15 +8,17 @@ import java.time.LocalDateTime;
 
 @Component
 public class MyMetaObjectHandler implements MetaObjectHandler {
-    LocalDateTime now =LocalDateTime.now().withNano(0);
+
     @Override
     public void insertFill(MetaObject metaObject) {
+        LocalDateTime now =LocalDateTime.now().withNano(0);
         this.strictInsertFill(metaObject, "createdAt",  LocalDateTime.class,now );
         this.strictInsertFill(metaObject, "updatedAt",  LocalDateTime.class, now);
     }
 
     @Override
     public void updateFill(MetaObject metaObject) {
+        LocalDateTime now =LocalDateTime.now().withNano(0);
         this.strictUpdateFill(metaObject, "updatedAt",  LocalDateTime.class, now);
     }
 }
