@@ -11,4 +11,6 @@ import com.xhkj.nls.business.domain.SmsCode;
 public interface SmsCodeService extends IService<SmsCode> {
 //     void sendCode(String phone, String use);
 void sendCode4Register(String mobile);
+void sendCode4Reset(String mobile);
+    void checkCode(String mobile, String code,String use);
 }

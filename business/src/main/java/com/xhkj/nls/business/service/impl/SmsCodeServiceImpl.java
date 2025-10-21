@@ -13,6 +13,7 @@ import com.xhkj.nls.business.mapper.SmsCodeMapper;
 import com.xhkj.nls.business.service.MemberService;
 import com.xhkj.nls.business.service.SmsCodeService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
  * @description 针对表【sms_code(短信验证码表)】的数据库操作Service实现
  * @createDate 2025-10-17 13:40:05
  */
+@Slf4j
 @Service
 public class SmsCodeServiceImpl extends ServiceImpl<SmsCodeMapper, SmsCode>
         implements SmsCodeService {
@@ -65,6 +67,39 @@ public class SmsCodeServiceImpl extends ServiceImpl<SmsCodeMapper, SmsCode>
                 throw new BusinessException(BusinessExceptionEnum.MEMBER_MOBILE_HAD_REGISTER);
             }
             sendCode(mobile, SmsCodeUseEnum.REGISTER.getCode());
+    }
+
+    @Override
+    public void sendCode4Reset(String mobile) {
+        boolean exists = memberService.exists(mobile);
+        if(!exists){
+            throw new BusinessException(BusinessExceptionEnum.MEMBER_MOBILE_NOT_REGISTER);
+        }
+        sendCode(mobile, SmsCodeUseEnum.RESET.getCode());
+    }
+
+    @Override
+    public void checkCode(String mobile, String code,String use) {
+        LambdaQueryWrapper<SmsCode> lambdaQueryWrapper = new LambdaQueryWrapper<SmsCode>()
+                .eq(SmsCode::getMobile, mobile)
+                .eq(SmsCode::getStatus, SmsCodeStatusEnum.NOT_USED.getCode())
+                .eq(SmsCode::getUse, use)
+                .ge(SmsCode::getCreatedAt, LocalDateTime.now().minusMinutes(5))
+                .orderByDesc(SmsCode::getCreatedAt).last("limit 1");
+
+        SmsCode smsCodeDB = smsCodeMapper.selectOne(lambdaQueryWrapper);
+        if (smsCodeDB == null) {
+            log.warn("验证码未发送或已过期，手机号：{}，输入验证码：{}，用途：{}", mobile, code, use);
+            throw new BusinessException(BusinessExceptionEnum.SMS_CODE_EXPIRED);
+        }else {
+            if (smsCodeDB.getCode().equals(code)) {
+                smsCodeDB.setStatus(SmsCodeStatusEnum.USED.getCode());
+                smsCodeMapper.updateById(smsCodeDB);
+            }else{
+                log.warn("验证码不正确，手机号：{}，输入验证码：{}，用途：{}", mobile, code, use);
+                throw new BusinessException(BusinessExceptionEnum.SMS_CODE_ERROR);
+            }
+        }
     }
 }
 
