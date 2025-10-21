@@ -1,7 +1,6 @@
 package com.xhkj.nls.business.controller.web;
 
 import com.xhkj.nls.business.common.CommonResp;
-import com.xhkj.nls.business.enums.SmsCodeUseEnum;
 import com.xhkj.nls.business.service.SmsCodeService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +16,7 @@ public class SmsCodeController {
 
      @RequestMapping(value = "/send-code",method = RequestMethod.POST)
      public CommonResp sendCode(String phone){
-         smsCodeService.sendCode(phone,  SmsCodeUseEnum.REGISTER.getCode());
+         smsCodeService.sendCode4Register(phone);
          return CommonResp.builder().success(true).build();
      }
 }

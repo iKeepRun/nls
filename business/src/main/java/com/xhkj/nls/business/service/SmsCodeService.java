@@ -9,5 +9,6 @@ import com.xhkj.nls.business.domain.SmsCode;
 * @createDate 2025-10-17 13:40:05
 */
 public interface SmsCodeService extends IService<SmsCode> {
-    void sendCode(String phone, String use);
+//     void sendCode(String phone, String use);
+void sendCode4Register(String mobile);
 }
