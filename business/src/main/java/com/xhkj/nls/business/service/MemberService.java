@@ -2,6 +2,8 @@ package com.xhkj.nls.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xhkj.nls.business.domain.Member;
+import com.xhkj.nls.business.req.MemberLoginReq;
+import com.xhkj.nls.business.req.MemberRegisterReq;
 
 /**
 * @author Administrator
@@ -10,4 +12,6 @@ import com.xhkj.nls.business.domain.Member;
 */
 public interface MemberService extends IService<Member> {
     boolean exists(String mobile);
+    void register(MemberRegisterReq memberRegisterReq);
+    void login(MemberLoginReq memberLoginReq);
 }

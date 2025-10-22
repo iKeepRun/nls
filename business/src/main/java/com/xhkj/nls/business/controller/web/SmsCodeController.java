@@ -18,8 +18,8 @@ public class SmsCodeController {
 
 
      @PostMapping(value = "/send-for-register")
-     public CommonResp sendCode(String phone){
-         smsCodeService.sendCode4Register(phone);
+     public CommonResp sendCode(String mobile){
+         smsCodeService.sendCode4Register(mobile);
          return CommonResp.builder().success(true).build();
      }
 

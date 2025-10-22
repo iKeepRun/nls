@@ -1,9 +1,16 @@
 package com.xhkj.nls.business.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xhkj.nls.business.domain.Member;
+import com.xhkj.nls.business.exception.BusinessException;
+import com.xhkj.nls.business.exception.BusinessExceptionEnum;
 import com.xhkj.nls.business.mapper.MemberMapper;
+import com.xhkj.nls.business.req.MemberLoginReq;
+import com.xhkj.nls.business.req.MemberRegisterReq;
 import com.xhkj.nls.business.service.MemberService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -22,6 +29,35 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
     public boolean exists(String mobile){
       return   memberMapper.exists(new LambdaQueryWrapper<Member>().eq(Member::getMobile, mobile));
     }
+
+    @Override
+    public void register(MemberRegisterReq memberRegisterReq) {
+        Member member = BeanUtil.toBean(memberRegisterReq, Member.class);
+
+        member.setPassword(DigestUtil.md5Hex16(member.getPassword()));
+        //生成昵称
+        StringBuilder sb = new StringBuilder();
+        for (int i = 3; i > 0; i--) {
+            sb.append(RandomUtil.randomChinese());
+        }
+        sb.append(RandomUtil.randomString(6));
+        sb.append(System.currentTimeMillis());
+        member.setName(sb.toString());
+        memberMapper.insert(member);
+    }
+
+
+    @Override
+    public void login(MemberLoginReq memberLoginReq) {
+        Member member = memberMapper.selectOne(new LambdaQueryWrapper<Member>()
+                .eq(Member::getMobile, memberLoginReq.getMobile())
+                .eq(Member::getPassword, DigestUtil.md5Hex16(memberLoginReq.getPassword())));
+        if (member == null) {
+            throw new BusinessException(BusinessExceptionEnum.MEMBER_LOGIN_ERROR);
+        }
+
+    }
+
 }
 
 

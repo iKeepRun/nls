@@ -51,13 +51,29 @@
 
 <script setup>
 import {reactive, computed} from 'vue';
+import {useRouter} from "vue-router";
+import {message} from 'ant-design-vue';
+import axios from "axios";
 
+
+const router = useRouter();
 const loginMember = reactive({
   mobile: '',
   password: '',
 });
 const onFinish = values => {
   console.log('Success:', values);
+  axios.post('/nls/web/member/login', loginMember).then(res => {
+    console.log(res.data);
+    if (res.data.success) {
+      message.success(res.data.message);
+      // localStorage.setItem('token', res.data.data.token);
+      // localStorage.setItem('member', JSON.stringify(res.data.data.member));
+      // localStorage.setItem('memberId', res.data.data.member.id);
+      // localStorage.setItem('memberName', res.data.data.member)
+      router.push('/home')
+    }
+  })
 };
 const onFinishFailed = errorInfo => {
   console.log('Failed:', errorInfo);
