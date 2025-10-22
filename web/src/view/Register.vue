@@ -1,12 +1,12 @@
 <template>
   <div class="register">
     <a-row align="middle" style="height: 100vh">
-      <a-col class="main" :span="6" :offset="9" >
+      <a-col class="main" :span="6" :offset="9">
         <div class="title">开始注册</div>
         <a-form
             :model="registerMember"
             name="normal_register"
-
+            ref="formRef"
             @finish="onFinish"
             @finishFailed="onFinishFailed"
         >
@@ -23,15 +23,16 @@
           </a-form-item>
 
           <a-form-item
-              name="password"
+              name="code"
               :rules="[{ required: true, message: '请输入验证码!' }]"
           >
             <a-input-search
-                v-model:value="value"
+                v-model:value="registerMember.code"
                 placeholder="请输入验证码"
-                enter-button="验证码"
+                :enter-button="enterBtn"
                 @search="onSearch"
                 size="large"
+                :class="{ 'countdown-disabled': isCounting }"
             />
           </a-form-item>
 
@@ -59,14 +60,14 @@
           </a-form-item>
 
           <a-form-item>
-            <a-button  type="primary" html-type="submit" size="large" class="register-form-button">
+            <a-button type="primary" html-type="submit" size="large" class="register-form-button">
               注&nbsp;册
             </a-button>
           </a-form-item>
         </a-form>
-<!--        <p>-->
-<!--          <router-link to="register">去注册！</router-link>-->
-<!--        </p>-->
+        <!--        <p>-->
+        <!--          <router-link to="register">去注册！</router-link>-->
+        <!--        </p>-->
       </a-col>
     </a-row>
   </div>
@@ -74,45 +75,107 @@
 
 
 <script setup>
-import {reactive, computed} from 'vue';
+import {ref, reactive, computed} from 'vue';
 import {useRouter} from 'vue-router';
+import axios from "axios";
+import {message} from "ant-design-vue";
 
 const router = useRouter();
+
+const enterBtn = ref("获取验证码");
+const formRef = ref();
+const isCounting = ref(false); // 控制倒计时状态
+
+
+const onSearch = async () => {
+  // 防止重复点击
+  if (isCounting.value) return;
+  try {
+    await formRef.value.validateFields(['mobile']);
+    // isCounting.value = true;
+
+    await axios.post('/nls/web/code/send-for-register', {mobile: registerMember.mobile}, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }).then(res => {
+      console.log(res.data);
+      if (res.data.success) {
+        isCounting.value = true;
+        //开始60s倒计时
+        let time = 59;
+        enterBtn.value = "重新发送 " + time + "s";
+        let timer = setInterval(() => {
+          time--;
+          enterBtn.value = "重新发送 " + time + "s";
+          if (time <= 0) {
+            clearInterval(timer)
+            enterBtn.value = "获取验证码";
+            isCounting.value = false;
+          }
+        }, 1000)
+      } else {
+        message.error(res.data.message);
+
+      }
+    });
+  } catch (e) {
+    console.log('手机号校验失败：', e);
+  }
+
+};
+
 const registerMember = reactive({
   mobile: '',
   password: '',
+  code: '',
   confirmPassword: ''
 });
-const onFinish = values => {
+const onFinish = async values => {
   console.log('Success:', values);
-  router.push('/login');
-};
-const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
-};
-const disabled = computed(() => {
-  return !(registerMember.mobile && registerMember.password);
-});
+  console.log('registerMember',registerMember);
+  await axios.post('/nls/web/member/register', registerMember).then(res => {
+        console.log(res.data);
+
+        if (res.data.success) {
+          message.success('注册成功');
+          router.push('/login');
+        }
+      }
+  )};
+
+  const onFinishFailed = errorInfo => {
+    console.log('Failed:', errorInfo);
+  };
+  const disabled = computed(() => {
+    return !(registerMember.mobile && registerMember.password);
+  });
 
 
-const validateConfirmPassword = async (_rule, value) => {
-  if (value === '') {
-    return Promise.reject('请输入确认密码');
-  } else if (value !== registerMember.password) {
-    return Promise.reject("两次输入的密码不匹配!");
-  } else {
-    return Promise.resolve();
-  }
-};
+  const validateConfirmPassword = async (_rule, value) => {
+    if (value === '') {
+      return Promise.reject('请输入确认密码');
+    } else if (value !== registerMember.password) {
+      return Promise.reject("两次输入的密码不匹配!");
+    } else {
+      return Promise.resolve();
+    }
+  };
 </script>
 
 <style scoped>
+.countdown-disabled :deep(.ant-input-group-addon) {
+  pointer-events: none; /* 禁用按钮点击事件 */
+  opacity: 0.6; /* 可选：降低按钮透明度表示禁用状态 */
+}
+
 .main {
   background-color: #f0f0f0;
   padding: 80px;
   border-radius: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+
 .title {
   font-size: 1.8rem;
   font-weight: bold;
@@ -124,5 +187,12 @@ const validateConfirmPassword = async (_rule, value) => {
   width: 100%;
   font-weight: bold;
 }
+
+:deep(.ant-input-group-addon) button {
+  width: 120px;
+  font-size: 14px;
+
+}
+
 </style>
 
