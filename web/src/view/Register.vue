@@ -23,6 +23,28 @@
           </a-form-item>
 
           <a-form-item
+              name="captcha"
+              :rules="[{ required: true, message: '请输入结果!', trigger: 'blur' }]"
+          >
+            <a-input
+                v-model:value="registerMember.captcha"
+                placeholder="请输入结果"
+                size="large"
+                class="captcha-input"
+            >
+              <template #addonAfter>
+                <img
+                    :src="captchaImageUrl"
+                    alt="图片验证码"
+                    @click="refreshCaptcha"
+                    style=" cursor: pointer;"
+                />
+              </template>
+            </a-input>
+          </a-form-item>
+
+
+          <a-form-item
               name="code"
               :rules="[{ required: true, message: '请输入验证码!' }]"
           >
@@ -75,7 +97,7 @@
 
 
 <script setup>
-import {ref, reactive, computed} from 'vue';
+import {ref, reactive, computed,onMounted} from 'vue';
 import {useRouter} from 'vue-router';
 import axios from "axios";
 import {message} from "ant-design-vue";
@@ -83,9 +105,25 @@ import {message} from "ant-design-vue";
 const router = useRouter();
 
 const enterBtn = ref("获取验证码");
+
 const formRef = ref();
 const isCounting = ref(false); // 控制倒计时状态
 
+const captchaImageUrl = ref('');
+
+// 刷新验证码
+const refreshCaptcha = () => {
+  axios.get('/nls/web/member/captcha').then(res => {
+    console.log("获取验证码",res.data);
+    captchaImageUrl.value = res.data.content.captcha;
+    registerMember.captchaId = res.data.content.key;
+  });
+};
+
+// 组件挂载时加载验证码
+onMounted(() => {
+  refreshCaptcha();
+});
 
 const onSearch = async () => {
   // 防止重复点击
@@ -129,11 +167,13 @@ const registerMember = reactive({
   mobile: '',
   password: '',
   code: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  captcha: '',
+  captchaId: ''
 });
 const onFinish = async values => {
   console.log('Success:', values);
-  console.log('registerMember',registerMember);
+  console.log('registerMember', registerMember);
   await axios.post('/nls/web/member/register', registerMember).then(res => {
         console.log(res.data);
 
@@ -142,25 +182,26 @@ const onFinish = async values => {
           router.push('/login');
         }
       }
-  )};
+  )
+};
 
-  const onFinishFailed = errorInfo => {
-    console.log('Failed:', errorInfo);
-  };
-  const disabled = computed(() => {
-    return !(registerMember.mobile && registerMember.password);
-  });
+const onFinishFailed = errorInfo => {
+  console.log('Failed:', errorInfo);
+};
+const disabled = computed(() => {
+  return !(registerMember.mobile && registerMember.password);
+});
 
 
-  const validateConfirmPassword = async (_rule, value) => {
-    if (value === '') {
-      return Promise.reject('请输入确认密码');
-    } else if (value !== registerMember.password) {
-      return Promise.reject("两次输入的密码不匹配!");
-    } else {
-      return Promise.resolve();
-    }
-  };
+const validateConfirmPassword = async (_rule, value) => {
+  if (value === '') {
+    return Promise.reject('请输入确认密码');
+  } else if (value !== registerMember.password) {
+    return Promise.reject("两次输入的密码不匹配!");
+  } else {
+    return Promise.resolve();
+  }
+};
 </script>
 
 <style scoped>
@@ -192,6 +233,10 @@ const onFinish = async values => {
   width: 120px;
   font-size: 14px;
 
+}
+
+.captcha-input :deep(.ant-input-group-addon) {
+  padding: 0;
 }
 
 </style>

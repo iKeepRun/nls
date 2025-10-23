@@ -24,4 +24,6 @@ public class MemberRegisterReq {
     @NotBlank(message = "【验证码】不能为空")
     private String code;
 
+    private String captcha;
+    private String captchaId;
 }
