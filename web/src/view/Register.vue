@@ -12,27 +12,29 @@
         >
           <a-form-item
               name="mobile"
-              :rules="[{ required: true, message: '请输入手机号!' }, { pattern: /^\d{11}$/, message: '手机号为11位数字', trigger: 'blur' }]"
+              :rules="[{ required: true, message: '请输入手机号!', trigger: 'blur'}, { pattern: /^\d{11}$/, message: '手机号为11位数字', trigger: 'blur' }]"
           >
             <a-input v-model:value="registerMember.mobile" placeholder="手机号" size="large">
               <template #prefix>
                 <MobileOutlined class="site-form-item-icon"/>
-                <!--              <UserOutlined class="site-form-item-icon"/>-->
               </template>
             </a-input>
           </a-form-item>
 
           <a-form-item
               name="captcha"
-              :rules="[{ required: true, message: '请输入结果!', trigger: 'blur' }]"
+              :rules="[{validator: validateCaptcha,trigger: 'blur'}]"
           >
             <a-input
                 v-model:value="registerMember.captcha"
-                placeholder="请输入结果"
+                placeholder="图片验证码"
                 size="large"
                 class="captcha-input"
             >
-              <template #addonAfter>
+              <template #prefix>
+                <SafetyOutlined/>
+              </template>
+              <template #suffix>
                 <img
                     :src="captchaImageUrl"
                     alt="图片验证码"
@@ -46,16 +48,20 @@
 
           <a-form-item
               name="code"
-              :rules="[{ required: true, message: '请输入验证码!' }]"
+              :rules="[{ required: true, message: '请输入短信验证码!' }]"
           >
             <a-input-search
                 v-model:value="registerMember.code"
-                placeholder="请输入验证码"
+                placeholder="短信验证码"
                 :enter-button="enterBtn"
                 @search="onSearch"
                 size="large"
                 :class="{ 'countdown-disabled': isCounting }"
-            />
+            >
+              <template #prefix>
+                <MessageOutlined/>
+              </template>
+            </a-input-search>
           </a-form-item>
 
 
@@ -76,7 +82,7 @@
           >
             <a-input-password v-model:value="registerMember.confirmPassword" placeholder="确认密码" size="large">
               <template #prefix>
-                <LockOutlined class="site-form-item-icon"/>
+                <CheckCircleOutlined/>
               </template>
             </a-input-password>
           </a-form-item>
@@ -97,11 +103,12 @@
 
 
 <script setup>
-import {ref, reactive, computed,onMounted} from 'vue';
+import {ref, reactive, onMounted} from 'vue';
 import {useRouter} from 'vue-router';
 import axios from "axios";
 import {message} from "ant-design-vue";
-
+// import {MD5} from 'crypto-js';
+import { hexMd5Key} from '../utils/md5.js';
 const router = useRouter();
 
 const enterBtn = ref("获取验证码");
@@ -113,8 +120,8 @@ const captchaImageUrl = ref('');
 
 // 刷新验证码
 const refreshCaptcha = () => {
-  axios.get('/nls/web/member/captcha').then(res => {
-    console.log("获取验证码",res.data);
+  axios.get('/nls/web/captcha/gen').then(res => {
+    console.log("获取验证码", res.data);
     captchaImageUrl.value = res.data.content.captcha;
     registerMember.captchaId = res.data.content.key;
   });
@@ -125,12 +132,14 @@ onMounted(() => {
   refreshCaptcha();
 });
 
+
+// 获取验证码
 const onSearch = async () => {
   // 防止重复点击
   if (isCounting.value) return;
   try {
     await formRef.value.validateFields(['mobile']);
-    // isCounting.value = true;
+    await formRef.value.validateFields(['captcha']);
 
     await axios.post('/nls/web/code/send-for-register', {mobile: registerMember.mobile}, {
       headers: {
@@ -171,12 +180,15 @@ const registerMember = reactive({
   captcha: '',
   captchaId: ''
 });
-const onFinish = async values => {
-  console.log('Success:', values);
-  console.log('registerMember', registerMember);
-  await axios.post('/nls/web/member/register', registerMember).then(res => {
-        console.log(res.data);
 
+
+const onFinish = async values => {
+  const payload={
+    ...registerMember,
+    password: hexMd5Key(registerMember.password).toString()
+  }
+  await axios.post('/nls/web/member/register', payload).then(res => {
+        console.log(res.data);
         if (res.data.success) {
           message.success('注册成功');
           router.push('/login');
@@ -188,18 +200,34 @@ const onFinish = async values => {
 const onFinishFailed = errorInfo => {
   console.log('Failed:', errorInfo);
 };
-const disabled = computed(() => {
-  return !(registerMember.mobile && registerMember.password);
-});
 
 
 const validateConfirmPassword = async (_rule, value) => {
   if (value === '') {
-    return Promise.reject('请输入确认密码');
+    return Promise.reject('请输入确认密码!');
   } else if (value !== registerMember.password) {
     return Promise.reject("两次输入的密码不匹配!");
   } else {
     return Promise.resolve();
+  }
+};
+
+const validateCaptcha = async (_rule, value) => {
+  if (value === '') {
+    return Promise.reject('请输入图片验证码!');
+  } else {
+    await axios.post('/nls/web/captcha/check', {captcha: registerMember.captcha, captchaId: registerMember.captchaId}, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }).then(res => {
+
+      if (!res.data.success) {
+        // message.error(res.data.message);
+        // registerMember.captcha = '';
+        return Promise.reject("结果不正确！");
+      }
+    })
   }
 };
 </script>
@@ -235,9 +263,10 @@ const validateConfirmPassword = async (_rule, value) => {
 
 }
 
-.captcha-input :deep(.ant-input-group-addon) {
-  padding: 0;
+.captcha-input {
+  padding: 0 11px;
 }
+
 
 </style>
 

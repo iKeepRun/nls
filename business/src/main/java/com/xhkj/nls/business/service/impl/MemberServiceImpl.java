@@ -30,6 +30,9 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
       return   memberMapper.exists(new LambdaQueryWrapper<Member>().eq(Member::getMobile, mobile));
     }
 
+     //明文：1234
+    //密码传参：9e0d8f309682f8bdddf15b85ebef56a3
+    //数据库：f10fc6a760ee2610
     @Override
     public void register(MemberRegisterReq memberRegisterReq) {
         Member member = BeanUtil.toBean(memberRegisterReq, Member.class);
@@ -49,6 +52,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
 
     @Override
     public void login(MemberLoginReq memberLoginReq) {
+
         Member member = memberMapper.selectOne(new LambdaQueryWrapper<Member>()
                 .eq(Member::getMobile, memberLoginReq.getMobile())
                 .eq(Member::getPassword, DigestUtil.md5Hex16(memberLoginReq.getPassword())));
@@ -56,6 +60,10 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
             throw new BusinessException(BusinessExceptionEnum.MEMBER_LOGIN_ERROR);
         }
 
+    }
+
+    public static void main(String[] args) {
+        System.out.println(DigestUtil.md5Hex16("9E0D8F309682F8BDDDF15B85EBEF56A3"));
     }
 
 }

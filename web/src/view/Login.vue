@@ -54,7 +54,7 @@ import {reactive, computed} from 'vue';
 import {useRouter} from "vue-router";
 import {message} from 'ant-design-vue';
 import axios from "axios";
-
+import {hexMd5Key} from "../utils/md5.js";
 
 const router = useRouter();
 const loginMember = reactive({
@@ -63,7 +63,12 @@ const loginMember = reactive({
 });
 const onFinish = values => {
   console.log('Success:', values);
-  axios.post('/nls/web/member/login', loginMember).then(res => {
+
+  const loginMemberParam={
+    ...loginMember,
+    password:hexMd5Key(loginMember.password)
+  }
+  axios.post('/nls/web/member/login', loginMemberParam).then(res => {
     console.log(res.data);
     if (res.data.success) {
       message.success(res.data.message);
