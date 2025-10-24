@@ -6,9 +6,7 @@
         <a-form
             :model="loginMember"
             name="normal_login"
-
             @finish="onFinish"
-            @finishFailed="onFinishFailed"
         >
           <a-form-item
               name="mobile"
@@ -33,6 +31,31 @@
             </a-input-password>
           </a-form-item>
 
+          <a-form-item
+              name="captcha"
+              :rules="[{validator: validateCaptcha,trigger: 'blur'}]"
+          >
+            <a-input
+                v-model:value="loginMember.captcha"
+                placeholder="图片验证码"
+                size="large"
+                class="captcha-input"
+            >
+              <template #prefix>
+                <SafetyOutlined/>
+              </template>
+              <template #suffix>
+                <img
+                    :src="captchaImageUrl"
+                    alt="图片验证码"
+                    @click="refreshCaptcha"
+                    style=" cursor: pointer;"
+                />
+              </template>
+            </a-input>
+          </a-form-item>
+
+
           <a-form-item>
             <a-button  type="primary" html-type="submit" size="large" class="login-form-button">
               登&nbsp;录
@@ -50,42 +73,75 @@
 
 
 <script setup>
-import {reactive, computed} from 'vue';
+import {reactive, computed, ref,onMounted} from 'vue';
 import {useRouter} from "vue-router";
 import {message} from 'ant-design-vue';
 import axios from "axios";
 import {hexMd5Key} from "../utils/md5.js";
+import {useUserStore} from "../store/userStore.js";
+
 
 const router = useRouter();
 const loginMember = reactive({
   mobile: '',
   password: '',
+  captchaId: '',
+  captcha:''
 });
-const onFinish = values => {
-  console.log('Success:', values);
 
+const captchaImageUrl = ref('');
+// 刷新验证码
+const refreshCaptcha = () => {
+  axios.get('/nls/web/captcha/gen').then(res => {
+    console.log("获取验证码", res.data);
+    captchaImageUrl.value = res.data.content.captcha;
+    loginMember.captchaId = res.data.content.key;
+  });
+};
+
+// 组件挂载时加载验证码
+onMounted(() => {
+  refreshCaptcha();
+});
+
+const validateCaptcha = async (_rule, value) => {
+  if (value === '') {
+    return Promise.reject('请输入图片验证码!');
+  } else {
+    await axios.post('/nls/web/captcha/check', {captcha: loginMember.captcha, captchaId: loginMember.captchaId}, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }).then(res => {
+
+      if (!res.data.success) {
+        // message.error(res.data.message);
+        // loginMember.captcha = '';
+        return Promise.reject("结果不正确！");
+      }
+    })
+  }
+};
+
+
+//登录
+const onFinish = values => {
   const loginMemberParam={
     ...loginMember,
     password:hexMd5Key(loginMember.password)
   }
   axios.post('/nls/web/member/login', loginMemberParam).then(res => {
-    console.log(res.data);
     if (res.data.success) {
-      message.success(res.data.message);
-      // localStorage.setItem('token', res.data.data.token);
-      // localStorage.setItem('member', JSON.stringify(res.data.data.member));
-      // localStorage.setItem('memberId', res.data.data.member.id);
-      // localStorage.setItem('memberName', res.data.data.member)
+       message.success("登录成功");
+      const userStore = useUserStore();
+      userStore.setUserInfo(res.data.content);
       router.push('/home')
+    }else{
+      message.error(res.data.message||"登录失败");
     }
   })
 };
-const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
-};
-const disabled = computed(() => {
-  return !(loginMember.mobile && loginMember.password);
-});
+
 </script>
 
 <style scoped>
@@ -110,6 +166,10 @@ const disabled = computed(() => {
 .login-form-button {
   width: 100%;
   font-weight: bold;
+}
+
+.captcha-input {
+  padding: 0 11px;
 }
 </style>
 

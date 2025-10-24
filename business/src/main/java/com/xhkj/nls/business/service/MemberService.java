@@ -13,5 +13,5 @@ import com.xhkj.nls.business.req.MemberRegisterReq;
 public interface MemberService extends IService<Member> {
     boolean exists(String mobile);
     void register(MemberRegisterReq memberRegisterReq);
-    void login(MemberLoginReq memberLoginReq);
+    Member login(MemberLoginReq memberLoginReq);
 }

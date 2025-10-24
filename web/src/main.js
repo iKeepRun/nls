@@ -7,10 +7,13 @@ import 'ant-design-vue/dist/reset.css';
 import * as Icons from '@ant-design/icons-vue';
 import router from "./router";
 import axios from "axios";
+import { createPinia } from 'pinia'
+
+const pinia = createPinia()
 
 const app = createApp(App);
 
-app.use(Antd).use(router).mount('#app');
+app.use(Antd).use(router).use(pinia).mount('#app');
 
 // 注册所有图标
 const icons = Icons;

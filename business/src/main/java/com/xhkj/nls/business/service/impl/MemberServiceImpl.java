@@ -51,7 +51,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
 
 
     @Override
-    public void login(MemberLoginReq memberLoginReq) {
+    public Member login(MemberLoginReq memberLoginReq) {
 
         Member member = memberMapper.selectOne(new LambdaQueryWrapper<Member>()
                 .eq(Member::getMobile, memberLoginReq.getMobile())
@@ -59,7 +59,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member>
         if (member == null) {
             throw new BusinessException(BusinessExceptionEnum.MEMBER_LOGIN_ERROR);
         }
-
+       return member;
     }
 
     public static void main(String[] args) {

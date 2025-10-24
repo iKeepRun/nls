@@ -8,7 +8,6 @@
             name="normal_register"
             ref="formRef"
             @finish="onFinish"
-            @finishFailed="onFinishFailed"
         >
           <a-form-item
               name="mobile"
@@ -107,16 +106,25 @@ import {ref, reactive, onMounted} from 'vue';
 import {useRouter} from 'vue-router';
 import axios from "axios";
 import {message} from "ant-design-vue";
-// import {MD5} from 'crypto-js';
+
 import { hexMd5Key} from '../utils/md5.js';
+
+
 const router = useRouter();
 
-const enterBtn = ref("获取验证码");
-
 const formRef = ref();
+const enterBtn = ref("获取验证码");
 const isCounting = ref(false); // 控制倒计时状态
-
 const captchaImageUrl = ref('');
+
+const registerMember = reactive({
+  mobile: '',
+  password: '',
+  code: '',
+  confirmPassword: '',
+  captcha: '',
+  captchaId: ''
+});
 
 // 刷新验证码
 const refreshCaptcha = () => {
@@ -172,16 +180,9 @@ const onSearch = async () => {
 
 };
 
-const registerMember = reactive({
-  mobile: '',
-  password: '',
-  code: '',
-  confirmPassword: '',
-  captcha: '',
-  captchaId: ''
-});
 
 
+//注册
 const onFinish = async values => {
   const payload={
     ...registerMember,
@@ -197,11 +198,8 @@ const onFinish = async values => {
   )
 };
 
-const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
-};
 
-
+//确认密码校验规则
 const validateConfirmPassword = async (_rule, value) => {
   if (value === '') {
     return Promise.reject('请输入确认密码!');
@@ -212,6 +210,7 @@ const validateConfirmPassword = async (_rule, value) => {
   }
 };
 
+// 图片验证码校验规则
 const validateCaptcha = async (_rule, value) => {
   if (value === '') {
     return Promise.reject('请输入图片验证码!');
@@ -221,10 +220,7 @@ const validateCaptcha = async (_rule, value) => {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }).then(res => {
-
       if (!res.data.success) {
-        // message.error(res.data.message);
-        // registerMember.captcha = '';
         return Promise.reject("结果不正确！");
       }
     })

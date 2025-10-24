@@ -19,7 +19,7 @@ public class JwtUtil {
     /**
      * 盐值很重要，不能泄漏，且每个项目都应该不一样，可以放到配置文件中
      */
-    private static final String key = "JiawaNLS";
+    private static final String key = "XhkjNLS";
 
     public static String createLoginToken(Map<String, Object> map) {
         LOG.info("准备生成登录token，map：{}", map);
