@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -45,13 +46,13 @@ public class Member implements Serializable {
      */
     @TableField(value = "created_at" ,fill = FieldFill.INSERT)
 
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     /**
      * 修改时间
      */
     @TableField(value = "updated_at",fill = FieldFill.INSERT_UPDATE)
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
