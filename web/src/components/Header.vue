@@ -1,6 +1,10 @@
 <template>
   <a-layout-header class="header">
     <div class="logo"/>
+    <div class="userinfo" v-if="userStore.name">欢迎,{{ userStore.name }}
+
+       <router-link to="/login" >退出登录</router-link>
+    </div>
     <a-menu
         v-model:selectedKeys="selectedKeys1"
         theme="dark"
@@ -12,7 +16,7 @@
       <a-menu-item key="3">nav 3</a-menu-item>
 
     </a-menu>
-    <div class="userinfo" v-if="userStore.name">欢迎,{{ userStore.name }}</div>
+
   </a-layout-header>
 
 </template>
@@ -27,11 +31,6 @@ const selectedKeys1 = ref(['2']);
 </script>
 
 <style scoped>
-.header{
-  display: flex;
-
-}
-
 .logo {
   float: left;
   width: 120px;
@@ -42,7 +41,6 @@ const selectedKeys1 = ref(['2']);
 .userinfo {
   float: right;
   color: white;
-  width: 100px;
 
 }
 
